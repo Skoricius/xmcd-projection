@@ -76,6 +76,7 @@ class MagnumfeVisualizer(object):
         self.view.opts['distance'] = dist
         self.view.opts['fov'] = fov
         self.view.opts['center'] = Vector(center[0], center[1], center[2])
+        self.view.repaint()
 
     def save_render(self, filename, size=(1024, 1024)):
         img = self.view.renderToArray(size)
