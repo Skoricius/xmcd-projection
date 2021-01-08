@@ -1,6 +1,8 @@
 from .data_import import *
 from .data_manipulation import *
 from .visualisation import *
+from .magnumfe_projection import *
+from .magnumfe_visualisation import *
 
 from types import ModuleType
 import sys
@@ -9,6 +11,7 @@ import importlib
 
 def deep_reload(m: ModuleType):
     name = m.__name__  # get the name that is used in sys.modules
+
     name_ext = name + '.'  # support finding sub modules or packages
 
     def compare(loaded: str):
