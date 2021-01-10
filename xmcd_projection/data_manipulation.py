@@ -92,21 +92,30 @@ def project_structure(struct, phi=90, theta=15, n=np.array([0, 0, 1])):
     return struct_projected
 
 
-def get_faces(tetra):
-    # get all the faces
+def get_faces_from_tetra(tetra):
     faces = np.array([np.delete(tr, i) for tr in tetra for i in range(4)])
+    return faces
+
+
+def get_faces_frozen(tetra):
+    # get all the faces
+    faces = get_faces_from_tetra(tetra)
     faces_sets = [frozenset(fc) for fc in faces]
     return faces_sets
 
 
 def get_edge_faces(tetra):
     # edge faces are faces that appear in only one tetrahedron
-    faces_sets = get_faces(tetra)
+    faces_sets = get_faces_frozen(tetra)
     edge_faces = []
     for item, count in Counter(faces_sets).most_common():
         if count == 1:
             edge_faces.append(item)
     return edge_faces
+
+
+def frozen_to_numpy(ls):
+    return np.array([list(it) for it in ls])
 
 
 def get_edge_points(edge_faces):

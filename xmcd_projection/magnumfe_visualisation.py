@@ -11,16 +11,18 @@ from .data_manipulation import *
 class MagnumfeVisualizer(object):
     """Object for visualising the xmcd projection"""
 
-    def __init__(self, struct, projected_struct, projected_xmcd, struct_colors=None):
+    def __init__(self, struct, projected_struct, projected_xmcd=None, struct_colors=None):
         # add the file attributes
-        self.struct = struct.copy()
-        # ground the structure
-        # self.struct.vertices -= np.min(self.struct.vertices,
-        #                                axis=0)[np.newaxis, :]
-        self.projected_struct = projected_struct.copy()
-        self.projected_xmcd = projected_xmcd.copy()
-        self.projected_xmcd = self.projected_xmcd / \
-            np.abs(self.projected_xmcd).max()
+        self.struct = struct
+        self.projected_struct = projected_struct
+        if projected_xmcd is None:
+            self.xmcd_color = np.zeros(
+                (self.projected_struct.faces.shape[0], 4))
+        else:
+            self.projected_xmcd = projected_xmcd / \
+                np.abs(projected_xmcd).max()
+            # get the xmcd color
+            self.xmcd_color = get_xmcd_color(self.projected_xmcd)
         self.struct_colors = np.zeros(
             (self.struct.faces.shape[0], 4)) if struct_colors is None else struct_colors
 
@@ -48,15 +50,13 @@ class MagnumfeVisualizer(object):
         while len(self.view.items) != 0:
             self.view.removeItem(self.view.items[0])
         # struct = trimesh.load(self.structure_file)
-        # get the xmcd color
-        xmcd_color = get_xmcd_color(self.projected_xmcd)
 
         # create meshes
         self.meshdata = gl.MeshData(vertexes=self.struct.vertices, faces=self.struct.faces,
                                     faceColors=self.struct_colors)
         self.meshdata_projected = gl.MeshData(vertexes=self.projected_struct.vertices,
                                               faces=self.projected_struct.faces,
-                                              faceColors=xmcd_color)
+                                              faceColors=self.xmcd_color)
 
         self.mesh = gl.GLMeshItem(meshdata=self.meshdata, smooth=False,
                                   drawFaces=True, drawEdges=False,

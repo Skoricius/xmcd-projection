@@ -1,4 +1,4 @@
-from xmcd_projection.data_manipulation import get_edge_faces, project_points, project_points_by_vector, get_projection_vector
+from xmcd_projection.data_manipulation import get_edge_faces, get_faces_from_tetra, project_points, project_points_by_vector, get_projection_vector
 import numpy as np
 from .data_import import define_trimesh, get_mesh_data
 from functools import partial
@@ -32,6 +32,11 @@ def triangle_ray_intersection(p, x0, triangle):
 
 
 def get_triangles_from_faces(points, faces):
+    return np.moveaxis(np.stack([points[faces[:, i], :] for i in range(3)]), 0, 1)
+
+
+def get_triangles_from_tetra(points, tetra):
+    faces = np.array(get_faces_from_tetra(tetra))
     return np.moveaxis(np.stack([points[faces[:, i], :] for i in range(3)]), 0, 1)
 
 
