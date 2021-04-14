@@ -4,6 +4,7 @@ img/**
 *.p
 *.npy
 .vscode/**
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

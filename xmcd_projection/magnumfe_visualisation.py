@@ -15,14 +15,15 @@ class MagnumfeVisualizer(object):
         # add the file attributes
         self.struct = struct
         self.projected_struct = projected_struct
+        # prepare the background color variable
+        self.background_color = 0.5
         if projected_xmcd is None:
             self.xmcd_color = np.zeros(
                 (self.projected_struct.faces.shape[0], 4))
         else:
-            self.projected_xmcd = projected_xmcd / \
-                np.abs(projected_xmcd).max()
+            self.projected_xmcd = projected_xmcd
             # get the xmcd color
-            self.xmcd_color = get_xmcd_color(self.projected_xmcd)
+            self.update_xmcd_color()
         self.struct_colors = np.zeros(
             (self.struct.faces.shape[0], 4)) if struct_colors is None else struct_colors
 
@@ -33,17 +34,40 @@ class MagnumfeVisualizer(object):
 
         # create the view
         self.view = gl.GLViewWidget()
-        self.view.setBackgroundColor(0.5)
+        self.view.setBackgroundColor(self.background_color)
         self.view.opts['distance'] = 10000
         self.view.setGeometry(100, 100, 1000, 1000)
 
         # generate the view
         self.generate_view()
 
-    def update_data(self, struct, magnetisation):
-        # add the file attributes
-        self.structure_file = struct
-        self.magnetisation = magnetisation
+    def update_xmcd_color(self):
+        mn, mx = self.projected_xmcd.min(), self.projected_xmcd.max()
+        # get the xmcd color
+        self.xmcd_color, background_color = get_xmcd_color(
+            self.projected_xmcd, vmin=mn, vmax=mx)
+        self.background_color = background_color[0]
+
+    def update_colors(self, projected_xmcd, struct_colors):
+        self.projected_xmcd = projected_xmcd
+        self.update_xmcd_color()
+        # set the colors
+        self.struct_colors = struct_colors
+        self.meshdata.setFaceColors(self.struct_colors)
+        self.meshdata_projected.setFaceColors(self.xmcd_color)
+
+        self.update_view()
+
+    def update_view(self):
+        self.mesh.meshDataChanged()
+        self.mesh_projected.meshDataChanged()
+        self.view.setBackgroundColor(self.background_color)
+        self.view.repaint()
+
+    def hide_projection(self):
+        self.projected_xmcd *= 0
+        self.update_xmcd_color()
+        self.update_view()
 
     def generate_view(self):
         # remove all items
@@ -66,21 +90,33 @@ class MagnumfeVisualizer(object):
                                             shader='balloon')
         self.view.addItem(self.mesh_projected)
         self.view.addItem(self.mesh)
+        self.set_camera(azi=None, center=self.get_structs_center())
 
     def show(self):
         self.view.show()
 
-    def set_camera(self, ele=90, azi=30, dist=5e5, fov=1, center=[0, -3000, 0]):
-        self.view.opts['elevation'] = ele
-        self.view.opts['azimuth'] = azi
+    def get_structs_center(self):
+        all_pts = np.vstack(
+            (self.struct.vertices, self.projected_struct.vertices))
+        return -(all_pts.max(axis=0) - all_pts.min(axis=0)) / 2
+
+    def set_camera(self, ele=90, azi=None, dist=5e5, fov=1, center=None):
+        if ele is not None:
+            self.view.opts['elevation'] = ele
+        if azi is not None:
+            self.view.opts['azimuth'] = azi
         self.view.opts['distance'] = dist
         self.view.opts['fov'] = fov
-        self.view.opts['center'] = Vector(center[0], center[1], center[2])
+        if center is not None:
+            self.view.opts['center'] = Vector(center[0], center[1], center[2])
         self.view.repaint()
 
     def save_render(self, filename, size=(1024, 1024)):
-        img = self.view.renderToArray(size)
-        saved = pg.makeQImage(img).save(filename)
+        img = self.get_view_image(size=size)
+        pg.makeQImage(img).save(filename)
+
+    def get_view_image(self, size=(1024, 1024)):
+        return self.view.renderToArray(size)
 
     def start(self):
         self.view.show()

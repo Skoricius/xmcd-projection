@@ -24,7 +24,10 @@ def get_mesh_data(mesh):
 def get_magnumfe_magnetisation(file_path):
     data = pd.read_csv(file_path)
     magnetisation = data.loc[:, ['m:0', 'm:1', 'm:2']].to_numpy()
-    points = data.loc[:, ['Points:0', 'Points:1', 'Points:2']].to_numpy()
+    if 'Points:0' in data:
+        points = data.loc[:, ['Points:0', 'Points:1', 'Points:2']].to_numpy()
+    else:
+        points = data.loc[:, ['Coordinates:0', 'Coordinates:1', 'Coordinates:2']].to_numpy()
 
     return magnetisation, points
 

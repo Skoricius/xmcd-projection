@@ -2,6 +2,7 @@ import matplotlib.cm as cm
 from matplotlib import colors
 import numpy as np
 from collections import Counter
+from scipy.spatial import KDTree
 
 
 def project_points(pts, phi=90, theta=15, n=np.array([0, 0, 1])):
@@ -52,17 +53,18 @@ def calculate_xmcd(magnetisation, phi=0, theta=15):
     return np.dot(magnetisation, p)
 
 
-def get_xmcd_color(xmcd):
+def get_xmcd_color(xmcd, vmin=-1, vmax=1):
     """Gets the color of the xmcd vector in grayscale"""
     # get the colormap
-    norm = colors.Normalize(vmin=-1, vmax=1)
+    norm = colors.Normalize(vmin=vmin, vmax=vmax)
     cmap = cm.gray
     # get the mapping function for colors
     cmap_fun = cm.ScalarMappable(norm=norm, cmap=cmap)
     # convert xmcd to color
     xmcd_color = cmap_fun.to_rgba(xmcd)
+    background_color = cmap_fun.to_rgba(0)
 
-    return xmcd_color
+    return xmcd_color, background_color
 
 
 def get_struct_face_mag_color(struct, magnetisation):
@@ -89,6 +91,16 @@ def project_structure(struct, phi=90, theta=15, n=np.array([0, 0, 1])):
     struct_projected = struct.copy()
     struct_projected.vertices = project_points(
         struct_projected.vertices, phi=phi, theta=theta, n=n)
+    return struct_projected
+
+
+def project_structure_byvector(struct, p=None, n=np.array([0, 0, 1])):
+    """Projects the structure along a vector p to the plane with normal n. Returns a trimesh structure."""
+    struct_projected = struct.copy()
+    if p is None:
+        p = get_projection_vector(90, 15)
+    struct_projected.vertices = project_points_by_vector(
+        struct_projected.vertices, p=p, n=n)
     return struct_projected
 
 
@@ -120,3 +132,16 @@ def frozen_to_numpy(ls):
 
 def get_edge_points(edge_faces):
     return set.union(*[set(ef) for ef in edge_faces])
+
+
+def get_shuffle_indx(pv_coords, msh_points):
+    """Finds the indices such that pv_coords[shuffle_indx, :] = msh_points.
+
+    This is only necessary when due to the file containing multiple parts, 
+    these get mixed up by the paraview export when compared to the original mesh.
+    These indices can be used to reshuffle the magnetisation:
+    magnetisation = magnetisation[shuffle_indx, :]
+    """
+    kd = KDTree(pv_coords)
+    d, shuffle_indx = kd.query(msh_points, eps=1e-2, p=1)
+    return shuffle_indx
