@@ -3,6 +3,7 @@ import pandas as pd
 import meshio
 import trimesh
 import pickle
+from .data_manipulation import get_faces_from_tetra
 
 
 def get_mesh(file_path):
@@ -17,7 +18,7 @@ def get_mesh_data_from_file(file_path):
 def get_mesh_data(mesh):
     tetra = [cb.data for cb in mesh.cells if cb.type == 'tetra'][0]
     points = mesh.points
-    faces = np.array([np.delete(tr, i) for tr in tetra for i in range(4)])
+    faces = get_faces_from_tetra(tetra)
     return points, faces, tetra
 
 
@@ -27,7 +28,8 @@ def get_magnumfe_magnetisation(file_path):
     if 'Points:0' in data:
         points = data.loc[:, ['Points:0', 'Points:1', 'Points:2']].to_numpy()
     else:
-        points = data.loc[:, ['Coordinates:0', 'Coordinates:1', 'Coordinates:2']].to_numpy()
+        points = data.loc[:, ['Coordinates:0',
+                              'Coordinates:1', 'Coordinates:2']].to_numpy()
 
     return magnetisation, points
 

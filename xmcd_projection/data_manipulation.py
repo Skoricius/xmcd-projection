@@ -56,8 +56,8 @@ def calculate_xmcd(magnetisation, phi=0, theta=15):
 def get_xmcd_color(xmcd, vmin=-1, vmax=1):
     """Gets the color of the xmcd vector in grayscale"""
     # get the colormap
-    norm = colors.Normalize(vmin=vmin, vmax=vmax)
-    cmap = cm.gray
+    norm = colors.Normalize(vmin=vmin * 0.95, vmax=vmax * 0.95)
+    cmap = cm.binary
     # get the mapping function for colors
     cmap_fun = cm.ScalarMappable(norm=norm, cmap=cmap)
     # convert xmcd to color
@@ -67,17 +67,18 @@ def get_xmcd_color(xmcd, vmin=-1, vmax=1):
     return xmcd_color, background_color
 
 
-def get_struct_face_mag_color(struct, magnetisation):
+def get_struct_face_mag_color(struct, magnetisation, cmap_name='seismic'):
     face_magnetisation = np.mean(
         [magnetisation[struct.faces[:, i], :] for i in range(3)], axis=0)
-    mag_colors = magnetisation_to_color(face_magnetisation)
+    mag_colors = magnetisation_to_color(
+        face_magnetisation, cmap_name=cmap_name)
     return mag_colors
 
 
-def magnetisation_to_color(magnetisation, cmap_name='gray'):
+def magnetisation_to_color(magnetisation, cmap_name='seismic'):
     # get the colormap
     norm = colors.Normalize(vmin=-1, vmax=1)
-    cmap = getattr(cm, 'gray')
+    cmap = getattr(cm, cmap_name)
     # get the mapping function for colors
     cmap_fun = cm.ScalarMappable(norm=norm, cmap=cmap)
     # convert xmcd to color
@@ -105,7 +106,10 @@ def project_structure_byvector(struct, p=None, n=np.array([0, 0, 1])):
 
 
 def get_faces_from_tetra(tetra):
-    faces = np.array([np.delete(tr, i) for tr in tetra for i in range(4)])
+    selector = np.arange(4)
+    # get the faces and reshuffle so that the same tetra faces are in groups of 4
+    faces = np.array([tetra[:, np.delete(selector, i)] for i in range(4)])
+    faces = np.swapaxes(faces, 0, 1).reshape(-1, 3)
     return faces
 
 

@@ -1,4 +1,6 @@
 
+from skimage.color.colorconv import rgb2gray, rgba2rgb
+from .image_manipulation import get_blurred_image
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 import pyqtgraph.opengl as gl
 import pyqtgraph as pg
@@ -53,20 +55,19 @@ class MagnumfeVisualizer(object):
         self.update_xmcd_color()
         # set the colors
         self.struct_colors = struct_colors
-        self.meshdata.setFaceColors(self.struct_colors)
-        self.meshdata_projected.setFaceColors(self.xmcd_color)
-
         self.update_view()
 
     def update_view(self):
+        self.meshdata.setFaceColors(self.struct_colors)
+        self.meshdata_projected.setFaceColors(self.xmcd_color)
         self.mesh.meshDataChanged()
         self.mesh_projected.meshDataChanged()
         self.view.setBackgroundColor(self.background_color)
         self.view.repaint()
 
     def hide_projection(self):
-        self.projected_xmcd *= 0
-        self.update_xmcd_color()
+        self.background_color = 1.0
+        self.xmcd_color[:, :3] = self.background_color
         self.update_view()
 
     def generate_view(self):
@@ -117,6 +118,32 @@ class MagnumfeVisualizer(object):
 
     def get_view_image(self, size=(1024, 1024)):
         return self.view.renderToArray(size)
+
+    def get_image_np(self, size=(1024, 1024)):
+        """Gets the image in the form plottable by matplotlib"""
+        img = self.get_view_image()
+        img = np.swapaxes(img, 0, 1)
+        return img
+
+    def get_blurred_image(self, sigma=4, desired_background=None):
+        """Applies a Gaussian blur to the image to make it correspond to the actual measurements more"""
+
+        img = self.get_image_np()
+        if desired_background is not None:
+            img = rgb2gray(rgba2rgb(img))
+            background = self.background_color
+            if desired_background >= background:
+                new1 = background / desired_background
+                img[img > new1] = new1
+                img /= new1
+            elif desired_background < background:
+                new0 = (background - desired_background) / \
+                    (1 - desired_background)
+                img[img < new0] = new0
+                img -= new0
+                img /= 1 - new0
+
+        return get_blurred_image(img, sigma=sigma)
 
     def start(self):
         self.view.show()

@@ -127,12 +127,11 @@ def get_xmcd_from_piercings(p, tetra_magnetisation, distances, pierced_tetra_num
     return xmcd
 
 
-def get_xmcd_from_piercings_list(mesh, magnetisation, piercings_list, p=None):
+def get_xmcd_from_piercings_list(tetra, magnetisation, piercings_list, p=None):
     if p is None:
         # get the beam direction
         p = get_projection_vector(90, 15)
     # get the mesh data
-    points, faces, tetra = get_mesh_data(mesh)
     tetra_magnetisation = get_tetra_magnetisation(tetra, magnetisation)
     xmcd = np.array([get_xmcd_from_piercings(p, tetra_magnetisation, dist, nums)
                      for dist, nums in piercings_list])
