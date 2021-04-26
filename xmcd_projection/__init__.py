@@ -1,8 +1,11 @@
-from .data_import import *
-from .data_manipulation import *
-from .visualisation import *
-from .magnumfe_projection import *
-from .magnumfe_visualisation import *
+from .data_loading import *
+from .color import *
+from .mesh_visualisation import MeshVisualizer
+from .mesh import Mesh
+from .projection import get_projection_vector
+from .raytracing import RayTracing
+from .image import get_blurred_image
+
 
 from types import ModuleType
 import sys
