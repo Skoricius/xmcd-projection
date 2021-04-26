@@ -1,16 +1,14 @@
-
-from skimage.color.colorconv import rgb2gray, rgba2rgb
-from .image_manipulation import get_blurred_image
-from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
+from .image import get_blurred_image
+from .color import *
+from pyqtgraph.Qt import QtCore, QtWidgets
 import pyqtgraph.opengl as gl
 import pyqtgraph as pg
 from pyqtgraph import Vector
 import numpy as np
 import sys
-from .data_manipulation import *
 
 
-class MagnumfeVisualizer(object):
+class MeshVisualizer(object):
     """Object for visualising the xmcd projection"""
 
     def __init__(self, struct, projected_struct, projected_xmcd=None, struct_colors=None):
@@ -55,20 +53,36 @@ class MagnumfeVisualizer(object):
         self.update_xmcd_color()
         # set the colors
         self.struct_colors = struct_colors
-        self.update_view()
 
-    def update_view(self):
         self.meshdata.setFaceColors(self.struct_colors)
         self.meshdata_projected.setFaceColors(self.xmcd_color)
         self.mesh.meshDataChanged()
         self.mesh_projected.meshDataChanged()
-        self.view.setBackgroundColor(self.background_color)
         self.view.repaint()
 
-    def hide_projection(self):
-        self.background_color = 1.0
-        self.xmcd_color[:, :3] = self.background_color
-        self.update_view()
+    def view_projection(self, **kwargs):
+        if self.mesh_projected not in self.view.items:
+            self.view.addItem(self.mesh_projected)
+        if self.mesh in self.view.items:
+            self.view.removeItem(self.mesh)
+        self.view.setBackgroundColor(self.background_color)
+        self.set_camera(**kwargs)
+
+    def view_struct(self, **kwargs):
+        if self.mesh_projected in self.view.items:
+            self.view.removeItem(self.mesh_projected)
+        if self.mesh not in self.view.items:
+            self.view.addItem(self.mesh)
+        self.view.setBackgroundColor(1.0)
+        self.set_camera(**kwargs)
+
+    def view_both(self, **kwargs):
+        if self.mesh_projected not in self.view.items:
+            self.view.addItem(self.mesh_projected)
+        if self.mesh not in self.view.items:
+            self.view.addItem(self.mesh)
+        self.view.setBackgroundColor(self.background_color)
+        self.set_camera(**kwargs)
 
     def generate_view(self):
         # remove all items
@@ -89,25 +103,27 @@ class MagnumfeVisualizer(object):
         self.mesh_projected = gl.GLMeshItem(meshdata=self.meshdata_projected, smooth=False,
                                             drawFaces=True, drawEdges=False,
                                             shader='balloon')
-        self.view.addItem(self.mesh_projected)
-        self.view.addItem(self.mesh)
-        self.set_camera(azi=None, center=self.get_structs_center())
+        self.view_both()
+        self.set_camera(azi=None, center=self.get_structs_center(), ele=90)
 
-    def show(self):
+    def show(self, **kwargs):
         self.view.show()
+        self.set_camera(**kwargs)
 
     def get_structs_center(self):
         all_pts = np.vstack(
             (self.struct.vertices, self.projected_struct.vertices))
         return -(all_pts.max(axis=0) - all_pts.min(axis=0)) / 2
 
-    def set_camera(self, ele=90, azi=None, dist=5e5, fov=1, center=None):
+    def set_camera(self, ele=None, azi=None, dist=None, fov=None, center=None):
         if ele is not None:
             self.view.opts['elevation'] = ele
         if azi is not None:
             self.view.opts['azimuth'] = azi
-        self.view.opts['distance'] = dist
-        self.view.opts['fov'] = fov
+        if dist is not None:
+            self.view.opts['distance'] = dist
+        if fov is not None:
+            self.view.opts['fov'] = fov
         if center is not None:
             self.view.opts['center'] = Vector(center[0], center[1], center[2])
         self.view.repaint()

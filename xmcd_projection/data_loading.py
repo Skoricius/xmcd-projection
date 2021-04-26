@@ -1,28 +1,16 @@
 import numpy as np
 import pandas as pd
-import meshio
-import trimesh
-import pickle
-from .data_manipulation import get_faces_from_tetra
 
 
-def get_mesh(file_path):
-    return meshio.read(file_path)
+def load_mesh_magnetisation(file_path):
+    """Gets the mesh magnetisation from a csv file containing columns for points (named "Points:<0-2>") and magnetisation (named "m:<0-2>").
 
+    Args:
+        file_path (str): Path to the file.
 
-def get_mesh_data_from_file(file_path):
-    mesh = get_mesh(file_path)
-    return get_mesh_data(mesh)
-
-
-def get_mesh_data(mesh):
-    tetra = [cb.data for cb in mesh.cells if cb.type == 'tetra'][0]
-    points = mesh.points
-    faces = get_faces_from_tetra(tetra)
-    return points, faces, tetra
-
-
-def get_magnumfe_magnetisation(file_path):
+    Returns:
+        tuple: magnetisation ((n,3) array), points ((n,3), array)
+    """
     data = pd.read_csv(file_path)
     magnetisation = data.loc[:, ['m:0', 'm:1', 'm:2']].to_numpy()
     if 'Points:0' in data:
@@ -34,16 +22,15 @@ def get_magnumfe_magnetisation(file_path):
     return magnetisation, points
 
 
-def define_trimesh(points, faces):
-    return trimesh.Trimesh(vertices=points, faces=faces, process=False)
-
-
-def get_struct_from_mesh(mesh):
-    points, faces, _ = get_mesh_data(mesh)
-    return define_trimesh(points, faces)
-
-
 def load_piercing_data(file_path):
+    """Loads all the data about piercing of the structure by light rays.
+
+    Args:
+        file_path (str): Path to the file.
+
+    Returns:
+        tuple: [description]
+    """
     data_loaded = np.load(file_path, allow_pickle=True).item()
     struct = data_loaded['struct']
     struct_projected = data_loaded['struct_projected']

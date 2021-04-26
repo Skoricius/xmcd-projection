@@ -1,11 +1,12 @@
-
+# This visualizer and functions here need to be updated. It is currently discontinued because mesh_visualisation is better and more accurate, but this is faster and simpler
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 import pyqtgraph.opengl as gl
 import pyqtgraph as pg
 from pyqtgraph import Vector
 import numpy as np
 import sys
-from .data_manipulation import *
+from .projection import project_structure
+from .color import get_xmcd_color
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'w')
@@ -16,10 +17,13 @@ from mpl_toolkits.mplot3d import Axes3D
 class Visualizer(object):
     """Object for visualising the xmcd projection"""
 
-    def __init__(self, struct, magnetisation):
+    def __init__(self, struct, magnetisation, p):
 
         # add the file attributes
         self.struct = struct
+        self.p = p
+        # ensure magnetisation normalized
+        magnetisation /= np.linalg.norm(magnetisation, axis=1)[:, np.newaxis]
         self.magnetisation = magnetisation
         app = QtWidgets.QApplication.instance()
         if app is None:
@@ -44,21 +48,18 @@ class Visualizer(object):
         # remove all items
         while len(self.view.items) != 0:
             self.view.removeItem(self.view.items[0])
-        # struct = trimesh.load(self.structure_file)
         struct = self.struct.copy()
         magnetisation = self.magnetisation
         # ground the structure
         struct.vertices -= np.min(struct.vertices, axis=0)[np.newaxis, :]
-        # with open(self.magnetisation_file, 'rb') as f:
-        #     magnetisation = pickle.load(f)
         # calculate the xmcd based on the magnetisation
-        xmcd = calculate_xmcd(magnetisation)
+        xmcd = np.dot(magnetisation, self.p)
         # get the xmcd color
-        xmcd_color = get_xmcd_color(xmcd)
-        xmcd_color_inv = get_xmcd_color(-xmcd)
+        xmcd_color, _ = get_xmcd_color(xmcd)
+        xmcd_color_inv, _ = get_xmcd_color(-xmcd)
 
         # get the projected structure
-        struct_projected = project_structure(struct)
+        struct_projected = project_structure(struct, self.p)
 
         # associate colors with faces
         face_colors = xmcd_color[struct.faces[:, 0], :]

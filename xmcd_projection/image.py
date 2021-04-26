@@ -10,3 +10,7 @@ def get_blurred_image(img, sigma=4):
     elif img.shape[1] == 3:
         img = rgb2gray(img)
     return gaussian(img, sigma=sigma)
+
+
+def img2uint(img):
+    return (img * 255).astype(np.uint8)
