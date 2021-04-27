@@ -4,7 +4,7 @@ from .mesh_visualisation import MeshVisualizer
 from .mesh import Mesh
 from .projection import get_projection_vector
 from .raytracing import RayTracing
-from .image import get_blurred_image
+from .image import *
 
 
 from types import ModuleType
