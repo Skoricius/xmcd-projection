@@ -17,6 +17,7 @@ To do this, have .msh file exported by GMSH and the magnetisation data by import
 %gui qt
 %matplotlib qt
 from xmcd_projection import *
+import numpy as np
 msh_file = r"testing\spiral_det_in_50w30t.msh"
 magnetisation_file = r"testing\data.30.csv"
 
@@ -25,9 +26,10 @@ msh = Mesh.from_file(msh_file)
 magnetisation, mag_points = load_mesh_magnetisation(magnetisation_file)
 # define the projection direction
 p = get_projection_vector(90, 16)
-# calculate raytracings
+# calculate raytracings. Note: this might take a while, but can be saved for multiple uses on the same mesh file
 raytr = RayTracing(msh, p)
 raytr.get_piercings()
+np.save("raytracing.npy", raytr, allow_pickle=True)
 
 # get the xmcd and magnetisation colors
 xmcd_value = raytr.get_xmcd(magnetisation)
