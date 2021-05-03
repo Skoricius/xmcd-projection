@@ -1,7 +1,10 @@
+from warnings import warn
 import numpy as np
 from .projection import project_structure
 from numba import njit
 from trimesh.ray.ray_triangle import ray_triangle_id
+from trimesh import triangles as triangles_mod
+from tqdm import tqdm
 
 
 class RayTracing():
@@ -58,16 +61,31 @@ class RayTracing():
             [magnetisation[tetra[:, i], :] for i in range(4)], axis=0)
 
 
+# TODO: this could be sped up using pyembree. See: https://trimsh.org/trimesh.ray.ray_pyembree.html
+# I was not able to install it on windows and this is fast enough for my structures.
 def get_points_piercings(ray_origins, p, triangles):
-    n = ray_origins.shape[0]
-    ray_directions = np.repeat(p[None, :], n, axis=0)
-    index_triangle, index_ray, locations = ray_triangle_id(
-        triangles, ray_origins, ray_directions)
-    piercings_list = [
-        get_piercings_frompt_lengths(
-            locations[index_ray == i],
-            index_triangle[index_ray == i] // 4)
-        for i in range(n)]
+    triangles_normal = triangles_mod.normals(triangles)[0]
+    tree = triangles_mod.bounds_tree(triangles)
+
+    pnew = p[np.newaxis, :]
+    tol = 1e-3
+
+    def ray_piercing_fun(orig): return ray_triangle_id(
+        triangles, orig[np.newaxis, :], pnew, triangles_normal=triangles_normal, tree=tree)
+
+    def get_piercings_item(orig):
+        ray_ids, _, locs = ray_piercing_fun(orig)
+        try:
+            return get_piercings_frompt_lengths(locs, ray_ids // 4)
+        except ValueError as e:
+            warn(
+                str(e) + ' If this happens rarely, it could be a numerical artefact.')
+            # running this again, if it crashes a second time, it's not an artefact!
+            ray_ids, _, locs = ray_piercing_fun(orig + tol)
+            return get_piercings_frompt_lengths(locs, ray_ids // 4)
+
+    # ray_ids_generator = (ray_id_fun(orig) for orig in ray_origins)
+    piercings_list = [get_piercings_item(orig) for orig in tqdm(ray_origins)]
     return piercings_list
 
 
@@ -79,7 +97,7 @@ def get_piercings_frompt_lengths(locations, intersected_tetrahedra_indx):
     for i, idx in enumerate(intersected_tetrahedra_indx_unique):
         pts = locations[intersected_tetrahedra_indx == idx]
         if pts.shape[0] != 2:
-            raise Exception(
+            raise ValueError(
                 'Wrong number of intersections! Ensure that tetrahedra are valid and that the projection plane does not intersect the structure.')
         intersected_tetrahedra_lengths[i] = np.linalg.norm(
             pts[0, :] - pts[1, :])

@@ -104,7 +104,8 @@ class MeshVisualizer(object):
                                             drawFaces=True, drawEdges=False,
                                             shader='balloon')
         self.view_both()
-        self.set_camera(azi=None, center=self.get_structs_center(), ele=90)
+        self.set_camera(
+            azi=None, center=self.get_structs_center(), ele=90, fov=1)
 
     def show(self, **kwargs):
         self.view.show()
