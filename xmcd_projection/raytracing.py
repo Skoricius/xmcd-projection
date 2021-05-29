@@ -74,15 +74,15 @@ def get_points_piercings(ray_origins, p, triangles):
         triangles, orig[np.newaxis, :], pnew, triangles_normal=triangles_normal, tree=tree)
 
     def get_piercings_item(orig):
-        ray_ids, _, locs = ray_piercing_fun(orig)
+        tri_id, _, locs = ray_piercing_fun(orig)
         try:
-            return get_piercings_frompt_lengths(locs, ray_ids // 4)
+            return get_piercings_frompt_lengths(locs, tri_id // 4)
         except ValueError as e:
             warn(
                 str(e) + ' If this happens rarely, it could be a numerical artefact.')
             # running this again, if it crashes a second time, it's not an artefact!
-            ray_ids, _, locs = ray_piercing_fun(orig + tol)
-            return get_piercings_frompt_lengths(locs, ray_ids // 4)
+            tri_id, _, locs = ray_piercing_fun(orig + tol)
+            return get_piercings_frompt_lengths(locs, tri_id // 4)
 
     # ray_ids_generator = (ray_id_fun(orig) for orig in ray_origins)
     piercings_list = [get_piercings_item(orig) for orig in tqdm(ray_origins)]
