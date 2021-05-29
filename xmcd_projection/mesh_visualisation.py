@@ -8,15 +8,72 @@ import numpy as np
 import sys
 
 
-class MeshVisualizer(object):
+class PyQtVisualizer():
+    def __init__(self, dist=10000, background_color=0.5):
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            app = QtWidgets.QApplication(sys.argv)
+        self.app = app
+
+        # create the view
+        self.background_color = background_color
+        self.view.setBackgroundColor(self.background_color)
+        self.view = gl.GLViewWidget()
+        self.view.setGeometry(100, 100, 1000, 1000)
+        self.view.opts['distance'] = dist
+
+    def show(self, **kwargs):
+        self.view.show()
+        self.set_camera(**kwargs)
+
+    def set_camera(self, ele=None, azi=None, dist=None, fov=None, center=None):
+        if ele is not None:
+            self.view.opts['elevation'] = ele
+        if azi is not None:
+            self.view.opts['azimuth'] = azi
+        if dist is not None:
+            self.view.opts['distance'] = dist
+        if fov is not None:
+            self.view.opts['fov'] = fov
+        if center is not None:
+            self.view.opts['center'] = Vector(center[0], center[1], center[2])
+        self.view.repaint()
+
+    def get_structs_center(self):
+        all_pts = np.vstack(
+            (self.struct.vertices, self.projected_struct.vertices))
+        return -(all_pts.max(axis=0) - all_pts.min(axis=0)) / 2
+
+    def save_render(self, filename, size=(1024, 1024)):
+        img = self.get_view_image(size=size)
+        pg.makeQImage(img).save(filename)
+
+    def get_view_image(self, size=(1024, 1024)):
+        return self.view.renderToArray(size)
+
+    def get_image_np(self, size=(1024, 1024)):
+        """Gets the image in the form plottable by matplotlib"""
+        img = self.get_view_image()
+        img = np.swapaxes(img, 0, 1)
+        return img
+
+    def start(self):
+        self.view.show()
+        self.view.raise_()
+        # del app
+        if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+            self.app.exec_()
+
+
+class MeshVisualizer(PyQtVisualizer):
     """Object for visualising the xmcd projection"""
 
     def __init__(self, struct, projected_struct, projected_xmcd=None, struct_colors=None):
+        super().__init__()
         # add the file attributes
         self.struct = struct
         self.projected_struct = projected_struct
-        # prepare the background color variable
-        self.background_color = 0.5
+
         if projected_xmcd is None:
             self.xmcd_color = np.zeros(
                 (self.projected_struct.faces.shape[0], 4))
@@ -26,17 +83,6 @@ class MeshVisualizer(object):
             self.update_xmcd_color()
         self.struct_colors = np.zeros(
             (self.struct.faces.shape[0], 4)) if struct_colors is None else struct_colors
-
-        app = QtWidgets.QApplication.instance()
-        if app is None:
-            app = QtWidgets.QApplication(sys.argv)
-        self.app = app
-
-        # create the view
-        self.view = gl.GLViewWidget()
-        self.view.setBackgroundColor(self.background_color)
-        self.view.opts['distance'] = 10000
-        self.view.setGeometry(100, 100, 1000, 1000)
 
         # generate the view
         self.generate_view()
@@ -107,41 +153,6 @@ class MeshVisualizer(object):
         self.set_camera(
             azi=None, center=self.get_structs_center(), ele=90, fov=1)
 
-    def show(self, **kwargs):
-        self.view.show()
-        self.set_camera(**kwargs)
-
-    def get_structs_center(self):
-        all_pts = np.vstack(
-            (self.struct.vertices, self.projected_struct.vertices))
-        return -(all_pts.max(axis=0) - all_pts.min(axis=0)) / 2
-
-    def set_camera(self, ele=None, azi=None, dist=None, fov=None, center=None):
-        if ele is not None:
-            self.view.opts['elevation'] = ele
-        if azi is not None:
-            self.view.opts['azimuth'] = azi
-        if dist is not None:
-            self.view.opts['distance'] = dist
-        if fov is not None:
-            self.view.opts['fov'] = fov
-        if center is not None:
-            self.view.opts['center'] = Vector(center[0], center[1], center[2])
-        self.view.repaint()
-
-    def save_render(self, filename, size=(1024, 1024)):
-        img = self.get_view_image(size=size)
-        pg.makeQImage(img).save(filename)
-
-    def get_view_image(self, size=(1024, 1024)):
-        return self.view.renderToArray(size)
-
-    def get_image_np(self, size=(1024, 1024)):
-        """Gets the image in the form plottable by matplotlib"""
-        img = self.get_view_image()
-        img = np.swapaxes(img, 0, 1)
-        return img
-
     def get_blurred_image(self, sigma=4, desired_background=None):
         """Applies a Gaussian blur to the image to make it correspond to the actual measurements more"""
 
@@ -162,9 +173,45 @@ class MeshVisualizer(object):
 
         return get_blurred_image(img, sigma=sigma)
 
-    def start(self):
-        self.view.show()
-        self.view.raise_()
-        # del app
-        if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-            self.app.exec_()
+
+class NoProjectionVisualizer(PyQtVisualizer):
+    """Object for visualising only the structure"""
+
+    def __init__(self, struct, struct_colors=None):
+        super().__init__(background_color=1.0)
+        # add the file attributes
+        self.struct = struct
+        self.struct_colors = np.zeros(
+            (self.struct.faces.shape[0], 4)) if struct_colors is None else struct_colors
+
+        # generate the view
+        self.generate_view()
+
+    def update_colors(self, struct_colors):
+        # set the colors
+        self.struct_colors = struct_colors
+
+        self.meshdata.setFaceColors(self.struct_colors)
+        self.mesh.meshDataChanged()
+        self.view.repaint()
+
+    def generate_view(self):
+        # remove all items
+        while len(self.view.items) != 0:
+            self.view.removeItem(self.view.items[0])
+        # struct = trimesh.load(self.structure_file)
+
+        # create meshes
+        self.meshdata = gl.MeshData(vertexes=self.struct.vertices, faces=self.struct.faces,
+                                    faceColors=self.struct_colors)
+
+        self.mesh = gl.GLMeshItem(meshdata=self.meshdata, smooth=False,
+                                  drawFaces=True, drawEdges=False,
+                                  shader='balloon')
+        self.view_struct()
+        self.set_camera(
+            azi=None, center=self.get_structs_center(), ele=90, fov=1)
+
+    def get_structs_center(self):
+        all_pts = self.struct.vertices
+        return -(all_pts.max(axis=0) - all_pts.min(axis=0)) / 2
