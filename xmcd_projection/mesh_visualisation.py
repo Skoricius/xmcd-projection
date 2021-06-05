@@ -17,8 +17,8 @@ class PyQtVisualizer():
 
         # create the view
         self.background_color = background_color
-        self.view.setBackgroundColor(self.background_color)
         self.view = gl.GLViewWidget()
+        self.view.setBackgroundColor(self.background_color)
         self.view.setGeometry(100, 100, 1000, 1000)
         self.view.opts['distance'] = dist
 
@@ -40,9 +40,11 @@ class PyQtVisualizer():
         self.view.repaint()
 
     def get_structs_center(self):
-        all_pts = np.vstack(
-            (self.struct.vertices, self.projected_struct.vertices))
-        return -(all_pts.max(axis=0) - all_pts.min(axis=0)) / 2
+        v1 = self.struct.vertices[self.struct.faces].reshape(-1, 3)
+        v2 = self.projected_struct.vertices[self.projected_struct.faces].reshape(
+            -1, 3)
+        all_pts = np.vstack((v1, v2))
+        return (all_pts.max(axis=0) + all_pts.min(axis=0)) / 2
 
     def save_render(self, filename, size=(1024, 1024)):
         img = self.get_view_image(size=size)
