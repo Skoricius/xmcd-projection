@@ -7,6 +7,11 @@ img/**
 *.csv
 *.svg
 examples/*.png
+docs/xmcd_projection*
+docs/examples.*.rst
+docs/README.*
+docs/_static/*
+docs/.deps
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

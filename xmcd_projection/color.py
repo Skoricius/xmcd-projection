@@ -3,9 +3,21 @@ import matplotlib.cm as cm
 from matplotlib import colors
 import numpy as np
 
+# TODO: check the caption
+
 
 def get_xmcd_color(xmcd, vmin=-1, vmax=1):
-    """Gets the color of the xmcd vector in grayscale"""
+    """Gets the color of the xmcd vector in grayscale. 
+    It normalizes it with max being 0.95 vmin and max 0.95 vmax.
+
+    Args:
+        xmcd ((n,) array): xmcd values to be normalized
+        vmin (int, optional): Min of normalization. Defaults to -1.
+        vmax (int, optional): Max of normalization. Defaults to 1.
+
+    Returns:
+        tule: xmcd_color ((n, 3) array), background_color ((3,) color)
+    """
     # get the colormap
     norm = colors.Normalize(vmin=vmin * 0.95, vmax=vmax * 0.95)
     cmap = cm.binary

@@ -2,6 +2,7 @@ import numpy as np
 
 
 def project_points(pts, p, n=[0, 0, 1], x0=[0, 0, 0]):
+    """Projects the points along a vector p to a surface with normal n going through point x0"""
     n = np.array(n)
     # projection matrix
     P = np.eye(3) - np.outer(p, n) / np.dot(p, n)
@@ -28,12 +29,23 @@ def get_projection_vector(phi, theta):
     return p
 
 
-def project_structure(struct, p, n=[0, 0, 1]):
-    """Projects the structure along a vector p to the plane with normal n containing the point x0. If x0 is None, take the point closest to the plane along p. Returns a trimesh structure."""
+def project_structure(struct, p, n=[0, 0, 1], x0=None):
+    """Projects the structure along a vector p to the plane with normal n containing the point x0. If x0 is None, take the structure point closest to the plane along p. Returns a trimesh structure.
+
+    Args:
+        struct (object): Any object containing property vertices which is (n,3) array
+        p ((3,) array): Projection direction.
+        n ((3,) array, optional): Normal to the surface. Defaults to [0, 0, 1].
+        x0 ((3,), optional): Point on the surface. Defaults to None.
+
+    Returns:
+        object: Same as struct with vertices being the projected points.
+    """
     struct_projected = struct.copy()
     n = np.array(n)
     points = np.array(struct.vertices)
-    x0 = np.min(points.dot(n)) * n
+    if x0 is None:
+        x0 = np.min(points.dot(n)) * n
     struct_projected.vertices = project_points(
         points, p, n=n, x0=x0)
     return struct_projected

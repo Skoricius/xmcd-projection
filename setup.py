@@ -25,6 +25,8 @@ setup(
         'PyQt5>=5.15.4',
         'pyqtgraph>=0.11.1',
         'scikit-image>=0.18.1',
-        'scipy>=1.6.2'
+        'scipy>=1.6.2',
+        'PyOpenGL>=3.1.5',
+        'cached-property>=1.5.2',
     ]
 )
