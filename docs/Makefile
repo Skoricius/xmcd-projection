@@ -20,6 +20,7 @@ html: conf.py index.rst install.rst examples.rst README.rst xmcd_projection.rst 
 	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	touch "$(BUILDDIR)/html/.nojekyll"
 	# echo "trimsh.org" > "$(BUILDDIR)/html/CNAME"
+	rm -rvf "$(BUILDDIR)/html/_static/examples/*"
 	mv "$(BUILDDIR)/html/_static/examples" "$(BUILDDIR)/html/examples" || true
 	mv "$(BUILDDIR)/html/_static/images" "$(BUILDDIR)/html/images" || true
 	# cp "$(STATICDIR)/favicon.ico" "$(BUILDDIR)/html/favicon.ico" || true

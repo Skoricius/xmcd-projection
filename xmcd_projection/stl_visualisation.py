@@ -15,9 +15,18 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 class Visualizer(object):
-    """Object for visualising the xmcd projection"""
+    """Object for visualising the xmcd projection on the stl file. 
+    This does not take into account the simulation or the raytracing and is just here for the quick rough visualization.
+    This class has not been updated for a while so might not work properly."""
 
     def __init__(self, struct, magnetisation, p):
+        """Initialization
+
+        Args:
+            struct (trimesh.Trimesh)
+            magnetisation ((n,3) array): Magnetisation of the vertices of the stl.
+            p ((3,) array): Projection direction.
+        """
 
         # add the file attributes
         self.struct = struct

@@ -13,38 +13,74 @@ First, we load the structure and the settings:
 
 .. sourcecode:: python
 
-    from f3ast import *
-    file_path = 'testing/FunktyBall.stl'
+    from xmcd_projection import *
 
-    settings = load_settings()
-    struct = Structure.from_file(file_path, **settings["structure"])
-    struct.show()
+    msh_file = "example_mesh.msh"
+    mag_file = "mag_data.csv"
 
-.. image:: _static/images/funkyball.png
+    # get the mesh
+    msh = Mesh.from_file(msh_file)
+    # get the projection vector
+    p = get_projection_vector(90, 16)
 
-Define the model and build the stream:
+    # prepare raytracing object
+    raytr = RayTracing(msh, p)
+    raytr.get_piercings()
+    struct = raytr.struct
+    struct_projected = raytr.struct_projected
+
+    # load magnetization and make sure the indices are not shuffled
+    magnetisation, mag_points = load_mesh_magnetisation(mag_file)
+    shuffle_indx = msh.get_shuffle_indx(mag_points)
+    magnetisation = magnetisation[shuffle_indx, :]
+
+    # get the colours and xmcd values
+    xmcd_value = raytr.get_xmcd(magnetisation)
+    mag_colors = get_struct_face_mag_color(struct, magnetisation)
+
+    # define the visualizer parameters and show
+    azi = 90
+    center_struct = [0, 0, 0]
+    dist_struct = 2e4
+    center_peem = [0, -1000, 0]
+    dist_peem = 2e5
+
+    vis = MeshVisualizer(struct, struct_projected,
+                        projected_xmcd=xmcd_value, struct_colors=mag_colors)
+    vis.show(azi=azi, center=center_peem, dist=dist_peem)
+    vis.start()
+
+
+.. image:: _static/images/shadow.png
+
+The raytracing and shuffle_indx can take a while to generate. It is useful to do it once for a structure and then save it:
 
 .. sourcecode:: python
 
-    gr = 0.15
-    k = 1
-    sigma = 4.4
-    model = DDModel(struct, gr, k, sigma, **settings['dd_model'])
-    stream_builder, dwell_solver = StreamBuilder.from_model(model, **settings['stream_builder'])
-    dwell_solver.print_total_time()
+    np.save("raytracing.npy", raytr, allow_pickle=True)
+    np.save("shuffle_indx.npy", shuffle_indx)
 
-Save the stream:
+For loading:
 
 .. sourcecode:: python
 
-    save_path = 'test_stream'
-    strm = stream_builder.get_stream()
-    # saves the stream in microscope readable format
-    strm.write(save_path)
-    # saves the build parameters for later reference
-    save_build(save_path, dwell_solver, stream_builder)
+    raytr = np.load("raytracing.npy", allow_pickle=True).item()
+    struct = raytr.struct
+    struct_projected = raytr.struct_projected
+    shuffle_indx = np.load("shuffle_indx.npy")
 
-The program saves two files: "test_stream.str" containing the microscope-readable instructions and the "test_stream.pickle" file continaing all the parameters used to build the stream for later reference.
+Shadow or the structure can be removed to focus on only one:
+
+.. sourcecode:: python
+
+    # only the projection
+    vis.view_projection(azi=azi, center=center_peem, dist=dist_peem)
+    # only the structure
+    vis.view_struct(azi=azi, center=center_struct, dist=dist_struct)
+    # show both
+    vis.view_both(azi=azi, center=center_peem, dist=dist_peem)
+
+
 
 
 

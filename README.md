@@ -12,35 +12,48 @@ If running in Jupyter, make sure you use qt gui for the visualizer to work:
 
 
 ### From GMSH .msh file and magnetisation in .csv exported from Magnumfe data
-To do this, have .msh file exported by GMSH and the magnetisation data by importing the data in Paraview and going to Save Data... and exporting to .csv
+To do this, have .msh file exported by GMSH and the magnetisation data by importing the data in Paraview and going to Save Data... and exporting to .csv. See `examples/example_script.py`:
 ```python 
-%gui qt
-%matplotlib qt
-from xmcd_projection import *
-import numpy as np
-msh_file = r"testing\spiral_det_in_50w30t.msh"
-magnetisation_file = r"testing\data.30.csv"
+    from xmcd_projection import *
 
-# get the mesh and magnetisation
-msh = Mesh.from_file(msh_file)
-magnetisation, mag_points = load_mesh_magnetisation(magnetisation_file)
-# define the projection direction
-p = get_projection_vector(90, 16)
-# calculate raytracings. Note: this might take a while, but can be saved for multiple uses on the same mesh file
-raytr = RayTracing(msh, p)
-raytr.get_piercings()
-np.save("raytracing.npy", raytr, allow_pickle=True)
+    msh_file = "example_mesh.msh"
+    mag_file = "mag_data.csv"
 
-# get the xmcd and magnetisation colors
-xmcd_value = raytr.get_xmcd(magnetisation)
-mag_colors = get_struct_face_mag_color(raytr.struct, magnetisation)
+    # get the mesh
+    msh = Mesh.from_file(msh_file)
+    # get the projection vector
+    p = get_projection_vector(90, 16)
 
-# visualize the result
-vis = MeshVisualizer(raytr.struct, raytr.struct_projected, projected_xmcd=xmcd_value, struct_colors=mag_colors)
-vis.show()
+    # prepare raytracing object
+    raytr = RayTracing(msh, p)
+    raytr.get_piercings()
+    struct = raytr.struct
+    struct_projected = raytr.struct_projected
+
+    # load magnetization and make sure the indices are not shuffled
+    magnetisation, mag_points = load_mesh_magnetisation(mag_file)
+    shuffle_indx = msh.get_shuffle_indx(mag_points)
+    magnetisation = magnetisation[shuffle_indx, :]
+
+    # get the colours and xmcd values
+    xmcd_value = raytr.get_xmcd(magnetisation)
+    mag_colors = get_struct_face_mag_color(struct, magnetisation)
+
+    # define the visualizer parameters and show
+    azi = 90
+    center_struct = [0, 0, 0]
+    dist_struct = 2e4
+    center_peem = [0, -1000, 0]
+    dist_peem = 2e5
+
+    vis = MeshVisualizer(struct, struct_projected,
+                        projected_xmcd=xmcd_value, struct_colors=mag_colors)
+    vis.show(azi=azi, center=center_peem, dist=dist_peem)
+    vis.start()
 ```
 
 ### From STL file and magnetisation as numpy array
+This is older version of the library, so might not work as well. Here just in case it is needed in the future
 ```python
 %gui qt
 %matplotlib qt
@@ -63,9 +76,3 @@ v.generate_view()
 v.show()
 v.save_render('test1.png')
 ```
-
-
-
-## TO DO
-* make sure you are only using struct.points
-* update README (magnumfe projection part)

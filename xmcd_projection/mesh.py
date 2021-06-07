@@ -7,18 +7,42 @@ from scipy.spatial import KDTree
 
 
 class Mesh:
-    def __init__(self, points, cells, parts=0) -> None:
+    """Object for handling the GMSH .msh files information
+    """
+
+    def __init__(self, points, cells, parts=0):
+        """Initializes the onbject
+
+        Args:
+            points ((n,3) array): points of the mesh
+            cells (list of cell blocks): Cells (see meshio library)
+            parts (int, optional): Which parts of the structure to take into account. Defaults to 0.
+        """
         self.points = points
         self.cells = cells
         self._parts = parts
 
     @classmethod
     def from_file(cls, file_path, parts=0):
+        """Create the object from file_path
+
+        Args:
+            file_path (str)
+            parts (int, optional): Which parts to use. Defaults to 0.
+
+        Returns:
+            Mesh
+        """
         msh = meshio.read(file_path)
         return cls(msh.points, msh.cells, parts=parts)
 
     @cached_property
     def tetra(self):
+        """Tetrahedra of the mesh.
+
+        Returns:
+            (n,4) array of point indices.
+        """
         tetra_list = [cb.data for cb in self.cells if cb.type == 'tetra']
         if isinstance(self._parts, (list, tuple)):
             return np.vstack([tetra_list[i] for i in self._parts])
@@ -27,6 +51,11 @@ class Mesh:
 
     @cached_property
     def faces(self):
+        """Faces of the mesh
+
+        Returns:
+            (n,3) array
+        """
         faces = Mesh.get_faces_from_tetra(self.tetra)
         return faces
 
@@ -64,6 +93,8 @@ class Mesh:
 
     @cached_property
     def edge_points_indices(self):
+        """Indices of the points on the edges of the mesh
+        """
         return set.union(*[set(ef) for ef in self.edge_faces])
 
     def get_bounding_struct(self):
