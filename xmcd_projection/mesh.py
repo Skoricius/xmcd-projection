@@ -4,6 +4,7 @@ from cached_property import cached_property
 import trimesh
 from collections import Counter
 from scipy.spatial import KDTree
+import os
 
 
 class Mesh:
@@ -23,8 +24,8 @@ class Mesh:
         self._parts = parts
 
     @classmethod
-    def from_file(cls, file_path, parts=0):
-        """Create the object from file_path
+    def from_file(cls, file_path, parts=0, scale=1):
+        """Create the object from file_path. Supports .msh files and .vtu files as exported by mumax.
 
         Args:
             file_path (str)
@@ -33,8 +34,27 @@ class Mesh:
         Returns:
             Mesh
         """
-        msh = meshio.read(file_path)
-        return cls(msh.points, msh.cells, parts=parts)
+
+        ext = os.path.splitext(file_path)[-1]
+        if ext == ".stl":
+            msh = meshio.read(file_path)
+            points = msh.points * scale
+            cells = msh.cells
+        elif ext == ".vtu":
+            msh0 = meshio.read(file_path)
+            # construct tetrahedra from cubes
+            n_cubes = msh0.cells[0].data.shape[0]
+            cube_to_tetra_idx = np.array([
+                [0, 3, 1, 4],
+                [2, 3, 1, 6],
+                [5, 6, 4, 1],
+                [7, 4, 6, 3],
+                [4, 6, 3, 1]])
+            tetra = np.vstack([msh0.cells[0].data[i, :][cube_to_tetra_idx[j, :]]
+                               for i in range(n_cubes) for j in range(5)])
+            points = msh0.points * scale
+            cells = [meshio.CellBlock(type="tetra", data=tetra[:10, :]), ]
+        return cls(points, cells, parts=parts)
 
     @cached_property
     def tetra(self):
