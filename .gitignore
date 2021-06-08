@@ -6,6 +6,9 @@ img/**
 .vscode/**
 *.csv
 *.svg
+*.vtu
+*.vtk
+/*.ipynb
 examples/*.png
 docs/xmcd_projection*
 docs/examples.*.rst

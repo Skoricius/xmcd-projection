@@ -48,4 +48,9 @@ def project_structure(struct, p, n=[0, 0, 1], x0=None):
         x0 = np.min(points.dot(n)) * n
     struct_projected.vertices = project_points(
         points, p, n=n, x0=x0)
+    # get rid of the triangles which get compressed to lines
+    tri = struct_projected.triangles
+    tri_areas = np.linalg.norm(np.cross(
+        tri[:, 0, :] - tri[:, 1, :], tri[:, 0, :] - tri[:, 2, :], axis=1), axis=1)
+    struct_projected.faces = struct_projected.faces[tri_areas > 1e-13]
     return struct_projected

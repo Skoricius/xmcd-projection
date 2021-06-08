@@ -97,10 +97,15 @@ class Mesh:
         """
         return set.union(*[set(ef) for ef in self.edge_faces])
 
-    def get_bounding_struct(self):
-        """STL file consisting of the faces on the edge of the mesh
+    def get_bounding_struct(self, fix=False):
+        """STL file consisting of the faces on the edge of the mesh. If fix=True, uses trimesh to fix the normals of the faces.
         """
-        return trimesh.Trimesh(vertices=self.points, faces=self.edge_faces, process=False)
+        struct = trimesh.Trimesh(vertices=self.points,
+                                 faces=self.edge_faces, process=False)
+        if fix:
+            trimesh.repair.fix_winding(struct)
+            trimesh.repair.fix_inversion(struct)
+        return struct
 
     def get_shuffle_indx(self, points):
         """Finds the indices such that points[shuffle_indx, :] = self.points.
