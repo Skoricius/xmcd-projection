@@ -2,26 +2,33 @@ from warnings import warn
 import numpy as np
 from .projection import project_structure
 from numba import njit
-from trimesh.ray.ray_triangle import ray_triangle_id
+# from trimesh.ray.ray_triangle import ray_triangle_id
 from trimesh import triangles as triangles_mod
 from tqdm import tqdm
+
+# tol.zero = 1e-12
+# print(tol.zero)
 
 
 class RayTracing():
     """Class that contains all the data required for raytracing.
     """
 
-    def __init__(self, mesh, p, n=[0, 0, 1]):
+    def __init__(self, mesh, p, n=[0, 0, 1], x0=[0, 0, 0], tol=1e-5):
         """Initializarion
 
         Args:
             mesh (Mesh)
             p ((3,) array): Beam direction vector.
             n ((3,), optional): Normal to the projection plane. Defaults to [0, 0, 1].
+            x0 ((3,), optional): Point on the projection plane. Defaults to [0, 0, 0].
+            tol (float, optional): Tolerance for numerical errors. Defaults to 1e-5.
         """
         self.mesh = mesh
-        self.p = p
-        self.n = n
+        self.p = np.array(p)
+        self.n = np.array(n)
+        self.x0 = np.array(x0)
+        self.tol = tol
 
         self._struct = None
         self._piercings = None
@@ -53,7 +60,7 @@ class RayTracing():
         """
         if self._struct_projected is None:
             self._struct_projected = project_structure(
-                self.struct, self.p, n=self.n)
+                self.struct, self.p, n=self.n, x0=self.x0)
         return self._struct_projected
 
     def get_piercings(self):
@@ -65,7 +72,7 @@ class RayTracing():
         # get all the piercing data
         points = self.struct_projected.triangles_center
         self._piercings = get_points_piercings(
-            points, self.p, self.mesh.triangles)
+            points, self.p, self.mesh.triangles, tol=self.tol)
 
     def get_xmcd(self, magnetisation):
         """Gets the xmcd data based on the per-vertex magnetization of the mesh.
@@ -94,7 +101,7 @@ class RayTracing():
 
 # TODO: this could be sped up using pyembree. See: https://trimsh.org/trimesh.ray.ray_pyembree.html
 # I was not able to install it on windows and this is fast enough for my structures.
-def get_points_piercings(ray_origins, p, triangles):
+def get_points_piercings(ray_origins, p, triangles, tol=1e-3):
     """Gets the ray piercings of triangles for each of the ray_origins along the vector p. 
     Returns the piercings as a list of tuples of two arrays for each of the ray origins. 
     Second array are the indices of the intersected tetrahedra and the first are the lengths of the intersections.
@@ -112,7 +119,6 @@ def get_points_piercings(ray_origins, p, triangles):
     tree = triangles_mod.bounds_tree(triangles)
 
     pnew = p[np.newaxis, :]
-    tol = 1e-3
 
     def ray_piercing_fun(orig): return ray_triangle_id(
         triangles, orig[np.newaxis, :], pnew, triangles_normal=triangles_normal, tree=tree)
@@ -122,6 +128,7 @@ def get_points_piercings(ray_origins, p, triangles):
         try:
             return get_piercings_frompt_lengths(locs, tri_id // 4)
         except ValueError as e:
+            print('warn')
             warn(
                 str(e) + ' If this happens rarely, it could be a numerical artefact.')
             # running this again, if it crashes a second time, it's not an artefact!
@@ -149,3 +156,114 @@ def get_piercings_frompt_lengths(locations, intersected_tetrahedra_indx):
         intersected_tetrahedra_lengths[i] = np.linalg.norm(
             pts[0, :] - pts[1, :])
     return (intersected_tetrahedra_lengths, intersected_tetrahedra_indx_unique)
+
+
+# THIS IS COPIED FROM TRIMESH LIBRARY, BUT I NEEDED TO EDIT THE LAST BIT WHERE THEY FILTER OUT FOR THE SIDE OF THE PLANE.
+# WE DO NOT CARE ABOUT THAT AND IT CAN INTRODUCE ERRORS.
+# ALSO, I ADDED THE CHECK FOR TRIANGLES NORMALS
+# ====================
+
+from trimesh import intersections
+from trimesh import triangles as triangles_mod
+from trimesh.constants import tol
+from trimesh.ray.ray_triangle import ray_triangle_candidates, ray_bounds
+
+
+def ray_triangle_id(
+        triangles,
+        ray_origins,
+        ray_directions,
+        triangles_normal=None,
+        tree=None):
+    """
+    Find the intersections between a group of triangles and rays
+    Parameters
+    -------------
+    triangles : (n, 3, 3) float
+      Triangles in space
+    ray_origins : (m, 3) float
+      Ray origin points
+    ray_directions : (m, 3) float
+      Ray direction vectors
+    triangles_normal : (n, 3) float
+      Normal vector of triangles, optional
+    tree : rtree.Index
+      Rtree object holding triangle bounds
+    Returns
+    -----------
+    index_triangle : (h,) int
+      Index of triangles hit
+    index_ray : (h,) int
+      Index of ray that hit triangle
+    locations : (h, 3) float
+      Position of intersection in space
+    """
+    triangles = np.asanyarray(triangles, dtype=np.float64)
+    ray_origins = np.asanyarray(ray_origins, dtype=np.float64)
+    ray_directions = np.asanyarray(ray_directions, dtype=np.float64)
+
+    # if we didn't get passed an r-tree for the bounds of each
+    # triangle create one here
+    if tree is None:
+        tree = triangles_mod.bounds_tree(triangles)
+
+    # find the list of likely triangles and which ray they
+    # correspond with, via rtree queries
+    ray_candidates, ray_id = ray_triangle_candidates(
+        ray_origins=ray_origins,
+        ray_directions=ray_directions,
+        tree=tree)
+
+    # get subsets which are corresponding rays and triangles
+    # (c,3,3) triangle candidates
+    triangle_candidates = triangles[ray_candidates]
+    # (c,3) origins and vectors for the rays
+    line_origins = ray_origins[ray_id]
+    line_directions = ray_directions[ray_id]
+
+    # get the plane origins and normals from the triangle candidates
+    plane_origins = triangle_candidates[:, 0, :]
+    if triangles_normal is None:
+        plane_normals, triangle_ok = triangles_mod.normals(
+            triangle_candidates)
+        if not triangle_ok.all():
+            raise ValueError('Invalid triangles!')
+    else:
+        plane_normals = triangles_normal[ray_candidates]
+
+    # find the intersection location of the rays with the planes
+    location, valid = intersections.planes_lines(
+        plane_origins=plane_origins,
+        plane_normals=plane_normals,
+        line_origins=line_origins,
+        line_directions=line_directions)
+
+    if (len(triangle_candidates) == 0 or
+            not valid.any()):
+        # we got no hits so return early with empty array
+        return (np.array([], dtype=np.int64),
+                np.array([], dtype=np.int64),
+                np.array([], dtype=np.float64))
+
+    # find the barycentric coordinates of each plane intersection on the
+    # triangle candidates
+    barycentric = triangles_mod.points_to_barycentric(
+        triangle_candidates[valid], location)
+
+    # the plane intersection is inside the triangle if all barycentric
+    # coordinates are between 0.0 and 1.0
+    hit = np.logical_and(
+        (barycentric > -tol.zero).all(axis=1),
+        (barycentric < (1 + tol.zero)).all(axis=1))
+
+    # the result index of the triangle is a candidate with a valid
+    # plane intersection and a triangle which contains the plane
+    # intersection point
+    index_tri = ray_candidates[valid][hit]
+    # the ray index is a subset with a valid plane intersection and
+    # contained by a triangle
+    index_ray = ray_id[valid][hit]
+    # locations are already valid plane intersections, just mask by hits
+    location = location[hit]
+
+    return index_tri, index_ray, location
