@@ -128,7 +128,6 @@ def get_points_piercings(ray_origins, p, triangles, tol=1e-3):
         try:
             return get_piercings_frompt_lengths(locs, tri_id // 4)
         except ValueError as e:
-            print('warn')
             warn(
                 str(e) + ' If this happens rarely, it could be a numerical artefact.')
             # running this again, if it crashes a second time, it's not an artefact!

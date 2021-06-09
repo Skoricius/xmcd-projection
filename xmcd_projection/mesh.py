@@ -53,7 +53,7 @@ class Mesh:
             tetra = np.vstack([msh0.cells[0].data[i, :][cube_to_tetra_idx[j, :]]
                                for i in range(n_cubes) for j in range(5)])
             points = msh0.points * scale
-            cells = [meshio.CellBlock(type="tetra", data=tetra[:10, :]), ]
+            cells = [meshio.CellBlock(type="tetra", data=tetra), ]
         return cls(points, cells, parts=parts)
 
     @cached_property
