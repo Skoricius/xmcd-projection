@@ -8,6 +8,7 @@ def load_mesh_magnetisation(file_path, scale=1):
 
     Args:
         file_path (str): Path to the file.
+        scale (float, optional): Scalar by which to scale coordinates. Default is 1.
 
     Returns:
         tuple: magnetisation ((n,3) array), points ((n,3), array)

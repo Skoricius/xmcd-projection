@@ -30,13 +30,14 @@ class Mesh:
         Args:
             file_path (str)
             parts (int, optional): Which parts to use. Defaults to 0.
+            scale (float, optional): Scale for the coordinates. Defaults to 1.
 
         Returns:
             Mesh
         """
 
         ext = os.path.splitext(file_path)[-1]
-        if ext == ".stl":
+        if ext == ".msh":
             msh = meshio.read(file_path)
             points = msh.points * scale
             cells = msh.cells
@@ -54,6 +55,8 @@ class Mesh:
                                for i in range(n_cubes) for j in range(5)])
             points = msh0.points * scale
             cells = [meshio.CellBlock(type="tetra", data=tetra), ]
+        else:
+            raise ValueError("File format not recognized!")
         return cls(points, cells, parts=parts)
 
     @cached_property

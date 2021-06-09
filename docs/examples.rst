@@ -5,10 +5,15 @@ A few examples are available as rendered IPython notebooks.
 
 
 	  
-Building a stream
+Magnum.fe projection simulation
 ''''''''''''''''''''''''''
 
-How to build a stream:
-`Building stream <examples/magnumfe_projection.html>`_
+`Magnum.fe simulation <examples/magnumfe_projection.html>`_
+
+	  
+Mumax projection simulation
+''''''''''''''''''''''''''
+
+`Mumax simulation <examples/mumax_projection.html>`_
 
 
