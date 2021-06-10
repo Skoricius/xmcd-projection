@@ -3,12 +3,13 @@
 Projection simulation of the PEEM structures
 
 ## Usage
+See the docs for details and examples.
+
 If running in Jupyter, make sure you use qt gui for the visualizer to work:
 ```python
 %gui qt
 %matplotlib qt
 ```
-
 
 
 ### From GMSH .msh file and magnetisation in .csv exported from Magnumfe data
