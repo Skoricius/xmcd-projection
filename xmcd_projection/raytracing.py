@@ -26,7 +26,7 @@ class RayTracing():
         """
         self.mesh = mesh
         self.p = np.array(p)
-        self.n = np.array(n)
+        self.n = np.array(n) / np.linalg.norm(n)
         self.x0 = np.array(x0)
         self.tol = tol
 
@@ -70,9 +70,20 @@ class RayTracing():
             list of tuples of arrays (lengths (n,), indices(n,)): for each triangle in the projected structure, lengths of the segment of the ray going through the tetrahedron with the given index.
         """
         # get all the piercing data
-        points = self.struct_projected.triangles_center
+        # use inscribed circle centre or each triangle as the ray origin
+        triangles = self.struct_projected.triangles
+        a = np.linalg.norm(triangles[:, 1, :] -
+                           triangles[:, 2, :], axis=1)[:, None]
+        b = np.linalg.norm(triangles[:, 2, :] -
+                           triangles[:, 0, :], axis=1)[:, None]
+        c = np.linalg.norm(triangles[:, 1, :] -
+                           triangles[:, 0, :], axis=1)[:, None]
+        ray_origins = (a * triangles[:, 0, :] + b * triangles[:,
+                                                              1, :] + c * triangles[:, 2, :]) / (a + b + c)
+        # ray_origins = self.struct_projected.triangles_center
+        # get the ray piercings
         self._piercings = get_points_piercings(
-            points, self.p, self.mesh.triangles, tol=self.tol)
+            ray_origins, self.p, self.mesh.triangles, tol=self.tol)
 
     def get_xmcd(self, magnetisation):
         """Gets the xmcd data based on the per-vertex magnetization of the mesh.
@@ -150,6 +161,7 @@ def get_piercings_frompt_lengths(locations, intersected_tetrahedra_indx):
     for i, idx in enumerate(intersected_tetrahedra_indx_unique):
         pts = locations[intersected_tetrahedra_indx == idx]
         if pts.shape[0] != 2:
+            continue
             raise ValueError(
                 'Wrong number of intersections! Ensure that tetrahedra are valid and that the projection plane does not intersect the structure.')
         intersected_tetrahedra_lengths[i] = np.linalg.norm(

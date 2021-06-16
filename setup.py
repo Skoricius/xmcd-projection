@@ -28,5 +28,8 @@ setup(
         'scipy>=1.6.2',
         'PyOpenGL>=3.1.5',
         'cached-property>=1.5.2',
+        'pandas>=1.0.5',
+        'meshio>=4.0.16',
+        'tqdm<=4.46.1'
     ]
 )
