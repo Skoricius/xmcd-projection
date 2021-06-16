@@ -119,12 +119,12 @@ def get_points_piercings(ray_origins, p, triangles, tol=1e-3):
 
 
     Args:
-        ray_origins ([type]): [description]
-        p ([type]): [description]
-        triangles ([type]): [description]
+        ray_origins ((n,3) array): Origins of the rays
+        p ((3,) array): Ray vector
+        triangles ((n,3,3) array): Triangles
 
     Returns:
-        [type]: [description]
+        list: piercings list
     """
     triangles_normal = triangles_mod.normals(triangles)[0]
     tree = triangles_mod.bounds_tree(triangles)
@@ -141,8 +141,10 @@ def get_points_piercings(ray_origins, p, triangles, tol=1e-3):
         except ValueError as e:
             warn(
                 str(e) + ' If this happens rarely, it could be a numerical artefact.')
-            # running this again, if it crashes a second time, it's not an artefact!
-            tri_id, _, locs = ray_piercing_fun(orig + tol)
+            # running this again with tiny random movement, if it crashes a second time, it's not an artefact!
+            move_dir = np.random.rand(3)
+            move_dir /= np.linalg.norm(move_dir)
+            tri_id, _, locs = ray_piercing_fun(orig + tol * move_dir)
             return get_piercings_frompt_lengths(locs, tri_id // 4)
 
     # ray_ids_generator = (ray_id_fun(orig) for orig in ray_origins)
@@ -161,7 +163,8 @@ def get_piercings_frompt_lengths(locations, intersected_tetrahedra_indx):
     for i, idx in enumerate(intersected_tetrahedra_indx_unique):
         pts = locations[intersected_tetrahedra_indx == idx]
         if pts.shape[0] != 2:
-            continue
+            # this could be improved. Instead of giving an error, it should deal with the numerical artefacts
+            # continue
             raise ValueError(
                 'Wrong number of intersections! Ensure that tetrahedra are valid and that the projection plane does not intersect the structure.')
         intersected_tetrahedra_lengths[i] = np.linalg.norm(
