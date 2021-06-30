@@ -68,6 +68,8 @@ class PyQtVisualizer():
         """Gets the image in the form plottable by matplotlib"""
         img = self.get_view_image()
         img = np.swapaxes(img, 0, 1)
+        # get rid of transparency and switch bgr to rgb
+        img = img[:, :, [2, 1, 0]]
         return img
 
     def start(self):
@@ -209,7 +211,7 @@ class MeshVisualizer(PyQtVisualizer):
 
         img = self.get_image_np()
         if desired_background is not None:
-            img = rgb2gray(rgba2rgb(img))
+            img = rgb2gray(img)
             background = self.background_color
             if desired_background >= background:
                 new1 = background / desired_background
