@@ -29,6 +29,8 @@ def abspath(rel):
     return os.path.abspath(os.path.join(cwd, rel))
 
 
+autodoc_mock_imports = ['sip', 'PyQt5',
+                        'PyQt5.QtGui', 'PyQt5.QtCore', 'PyQt5.QtWidgets', 'pyqtgraph']
 extensions = ['sphinx.ext.napoleon', 'nbsphinx']
 
 # Add any paths that contain templates here, relative to this directory.

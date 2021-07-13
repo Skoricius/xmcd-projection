@@ -15,7 +15,7 @@ setup(
     description='Library for simulating XMCD projection signal',
     long_description=long_description,
     author='Luka Skoric',
-    license='GNU GENERAL PUBLIC LICENSE',
+    license='MIT LICENSE',
     install_requires=[
         'trimesh>=3.9.12',
         'numpy>=1.20.2',
