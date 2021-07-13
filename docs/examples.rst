@@ -4,16 +4,10 @@ Examples
 A few examples are available as rendered IPython notebooks.
 
 
-	  
-Magnum.fe projection simulation
-''''''''''''''''''''''''''
+.. toctree::
+   :includehidden:
 
-`Magnum.fe simulation <examples/magnumfe_projection.html>`_
-
-	  
-Mumax projection simulation
-''''''''''''''''''''''''''
-
-`Mumax simulation <examples/mumax_projection.html>`_
+   examples/magnumfe_projection.ipynb
+   examples/mumax_projection.ipynb
 
 
