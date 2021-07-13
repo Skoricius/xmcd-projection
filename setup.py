@@ -10,10 +10,11 @@ if os.path.exists('README.md'):
 
 setup(
     name='XMCD Projection',
-    version='0.1.0',
+    version='1.0.0',
     packages=find_packages(include=['xmcd_projection']),
     description='Library for simulating XMCD projection signal',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Luka Skoric',
     license='MIT LICENSE',
     install_requires=[
