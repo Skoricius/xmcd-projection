@@ -1,9 +1,12 @@
 # XMCD Projection
 
+[![Documentation Status](https://readthedocs.org/projects/xmcd-projection/badge/?version=latest)](https://xmcd-projection.readthedocs.io/en/latest/?badge=latest)
+      
+
 Projection simulation of the PEEM structures
 
 ## Usage
-See the docs for details and examples.
+See the [docs](https://xmcd-projection.readthedocs.io/en/latest/?badge=latest) for details and examples: 
 
 If running in Jupyter, make sure you use qt gui for the visualizer to work:
 ```python
