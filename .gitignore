@@ -13,10 +13,6 @@ examples/*.png
 !examples/*.vtu
 !examples/*.csv
 !examples/*.msh
-docs/xmcd_projection*
-docs/examples.*.rst
-docs/README.*
-docs/_static/examples/*
 !docs/_static/*.png
 docs/.deps
 
