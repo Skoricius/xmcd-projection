@@ -10,3 +10,4 @@ pyopenssl
 autodocsumm
 jinja2
 jupyter-contrib-nbextensions
+nbsphinx
