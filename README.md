@@ -2,6 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/xmcd-projection/badge/?version=latest)](https://xmcd-projection.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/374098368.svg)](https://zenodo.org/badge/latestdoi/374098368)
+[![PyPi version](https://pypip.in/v/xmcdpy/badge.png)](https://pypi.org/project/XMCD-Projection/)
 
 Projection simulation of the PEEM structures
 
