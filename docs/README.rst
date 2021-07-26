@@ -1,12 +1,32 @@
 XMCD Projection
 ===============
 
+|Documentation Status| |DOI| |PyPi version|
+
 Projection simulation of the PEEM structures
+
+Installation
+------------
+
+The project is available on PyPi:
+
+::
+
+   pip install xmcd-projection
+
+In order to run the example notebooks, jupyter also needs to be
+installed:
+
+::
+
+   pip install jupyter
 
 Usage
 -----
 
-See the docs for details and examples.
+See the
+`docs <https://xmcd-projection.readthedocs.io/en/latest/?badge=latest>`__
+for details and examples:
 
 If running in Jupyter, make sure you use qt gui for the visualizer to
 work:
@@ -146,3 +166,10 @@ just in case it is needed in the future
    v.generate_view()
    v.show()
    v.save_render('test1.png')
+
+.. |Documentation Status| image:: https://readthedocs.org/projects/xmcd-projection/badge/?version=latest
+   :target: https://xmcd-projection.readthedocs.io/en/latest/?badge=latest
+.. |DOI| image:: https://zenodo.org/badge/374098368.svg
+   :target: https://zenodo.org/badge/latestdoi/374098368
+.. |PyPi version| image:: https://pypip.in/v/XMCD-Projection/badge.png
+   :target: https://pypi.org/project/XMCD-Projection/
