@@ -19,7 +19,7 @@ setup(
     license='MIT LICENSE',
     install_requires=[
         'trimesh>=3.9.12',
-        'numpy>=1.20.2',
+        'numpy==1.20.2',
         'matplotlib>=3.4.1',
         'numba>=0.53.1',
         'joblib>=1.0.1',
