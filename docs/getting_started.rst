@@ -7,9 +7,7 @@ Getting started
 Usage
 ====================
 
-Microscope settings are defined in `settings.hjson` file and contain information about the microscope and basic slicing settings.
-
-First, we load the structure and the settings:
+Example code where the mesh is in ``example_mesh.msh`` file and magnetization data in ``mag_file``.
 
 .. sourcecode:: python
 
