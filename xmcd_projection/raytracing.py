@@ -152,7 +152,7 @@ def get_points_piercings(ray_origins, p, triangles, tol=1e-3):
     return piercings_list
 
 
-@njit(fastmath=True)
+# @njit()
 def get_piercings_frompt_lengths(locations, intersected_tetrahedra_indx):
     """Gets the lengths and the unique index of intersected tetrahedra.
     I.e. from the locations of intersections and the indices of intersected tetrahedra, get the tetrahedra that were pierced twice and the length of the intersection segment.
@@ -164,9 +164,9 @@ def get_piercings_frompt_lengths(locations, intersected_tetrahedra_indx):
         pts = locations[intersected_tetrahedra_indx == idx]
         if pts.shape[0] != 2:
             # this could be improved. Instead of giving an error, it should deal with the numerical artefacts
-            # continue
-            raise ValueError(
-                'Wrong number of intersections! Ensure that tetrahedra are valid and that the projection plane does not intersect the structure.')
+            continue
+            # raise ValueError(
+            #     'Wrong number of intersections! Ensure that tetrahedra are valid and that the projection plane does not intersect the structure.')
         intersected_tetrahedra_lengths[i] = np.linalg.norm(
             pts[0, :] - pts[1, :])
     return (intersected_tetrahedra_lengths, intersected_tetrahedra_indx_unique)
