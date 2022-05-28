@@ -14,21 +14,29 @@ class RayTracing():
     """Class that contains all the data required for raytracing.
     """
 
-    def __init__(self, mesh, p, n=[0, 0, 1], x0=[0, 0, 0], tol=1e-5):
+    def __init__(self, mesh, p, n=[0, 0, 1], x0=None, tol=1e-5):
         """Initializarion
 
         Args:
             mesh (Mesh)
             p ((3,) array): Beam direction vector.
             n ((3,), optional): Normal to the projection plane. Defaults to [0, 0, 1].
-            x0 ((3,), optional): Point on the projection plane. Defaults to [0, 0, 0].
+            x0 ((3,), optional): Point on the projection plane. Defaults to the minimum point in the n direction.
             tol (float, optional): Tolerance for numerical errors. Defaults to 1e-5.
         """
         self.mesh = mesh
-        self.p = np.array(p)
+        self.p = np.array(p) / np.linalg.norm(p)
         self.n = np.array(n) / np.linalg.norm(n)
-        self.x0 = np.array(x0)
+        if self.p.dot(self.n) == 0:
+            raise ValueError(
+                "Beam direction can not be parallel to the screen!")
         self.tol = tol
+        if x0 is None:
+            # point of the structure the most in the negative n direction
+            min_normal_dir = np.min(self.mesh.points.dot(self.n)) - self.tol
+            self.x0 = min_normal_dir*self.n
+        else:
+            self.x0 = np.array(x0)
 
         self._struct = None
         self._piercings = None
@@ -164,9 +172,9 @@ def get_piercings_frompt_lengths(locations, intersected_tetrahedra_indx):
         pts = locations[intersected_tetrahedra_indx == idx]
         if pts.shape[0] != 2:
             # this could be improved. Instead of giving an error, it should deal with the numerical artefacts
-            continue
-            # raise ValueError(
-            #     'Wrong number of intersections! Ensure that tetrahedra are valid and that the projection plane does not intersect the structure.')
+            # continue
+            raise ValueError(
+                'Wrong number of intersections! Ensure that tetrahedra are valid and that the projection plane does not intersect the structure.')
         intersected_tetrahedra_lengths[i] = np.linalg.norm(
             pts[0, :] - pts[1, :])
     return (intersected_tetrahedra_lengths, intersected_tetrahedra_indx_unique)

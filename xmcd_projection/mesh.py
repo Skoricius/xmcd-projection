@@ -1,10 +1,12 @@
+import os
+from collections import Counter
+
 import meshio
 import numpy as np
-from cached_property import cached_property
 import trimesh
-from collections import Counter
+from cached_property import cached_property
 from scipy.spatial import KDTree
-import os
+from scipy.spatial.transform import Rotation
 
 
 class Mesh:
@@ -147,3 +149,24 @@ class Mesh:
         kd = KDTree(points)
         _, shuffle_indx = kd.query(self.points, eps=1e-2, p=1)
         return shuffle_indx
+
+    def translate(self, v):
+        """Translate the structure by v
+
+        Parameters
+        ----------
+        v : ((3,) array)
+            Translation vector
+        """
+        self.points += v
+
+    def rotate(self, v):
+        """Rotates the structure by rotation vector
+
+        Parameters
+        ----------
+        v : ((3,) array)
+            Rotation vector. See scipy rotvec.
+        """
+        r = Rotation.from_rotvec(v)
+        self.points = self.points.dot(r.as_matrix().T)
