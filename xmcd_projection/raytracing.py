@@ -12,10 +12,6 @@ from tqdm import tqdm
 
 class RayTracing():
     """Class that contains all the data required for raytracing.
-    """
-
-    def __init__(self, mesh, p, n=[0, 0, 1], x0=None, tol=1e-5):
-        """Initializarion
 
         Args:
             mesh (Mesh)
@@ -23,7 +19,9 @@ class RayTracing():
             n ((3,), optional): Normal to the projection plane. Defaults to [0, 0, 1].
             x0 ((3,), optional): Point on the projection plane. Defaults to the minimum point in the n direction.
             tol (float, optional): Tolerance for numerical errors. Defaults to 1e-5.
-        """
+    """
+
+    def __init__(self, mesh, p, n=[0, 0, 1], x0=None, tol=1e-5):
         self.mesh = mesh
         self.p = np.array(p) / np.linalg.norm(p)
         self.n = np.array(n) / np.linalg.norm(n)
