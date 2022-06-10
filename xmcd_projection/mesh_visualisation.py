@@ -31,6 +31,12 @@ class PyQtVisualizer():
         self.view.show()
         self.set_camera(**kwargs)
 
+    @staticmethod
+    def get_axes(size):
+        axes = gl.GLAxisItem()
+        axes.setSize(x=size, y=size, z=size)
+        return axes
+
     def set_camera(self, ele=None, azi=None, dist=None, fov=None, center=None):
         """Sets the camera angle and position. Any kwag that is not passed is kept as is.
 
@@ -85,13 +91,15 @@ class PyQtVisualizer():
 class MeshVisualizer(PyQtVisualizer):
     """Object for visualising the xmcd projection"""
 
-    def __init__(self, struct, projected_struct, projected_xmcd=None, struct_colors=None):
+    def __init__(self, struct, projected_struct, projected_xmcd=None,
+                 struct_colors=None, axes=False):
         """Initializes the class
 
         Args:
             struct (trimesh.Trimesh)
             projected_struct (trimesh.Trimesh)
-            projected_xmcd ((n,) array, optional): Values of the projected xmcd corresponding to the faces of the projected structure. Defaults to None.
+            projected_xmcd ((n,) array, optional): Values of the projected
+                xmcd corresponding to the faces of the projected structure. Defaults to None.
             struct_colors ((m,4), optional): Colours of the structure magnetization. Defaults to None.
         """
         super().__init__()
@@ -111,6 +119,8 @@ class MeshVisualizer(PyQtVisualizer):
 
         # generate the view
         self.generate_view()
+        self.axes = self.get_axes(np.max(np.abs(self.struct.triangles)))
+        self.set_axes(axes)
 
     def get_structs_center(self):
         """Gets the centre of the structure and the projected structure
@@ -162,7 +172,8 @@ class MeshVisualizer(PyQtVisualizer):
         self.set_camera(**kwargs)
 
     def view_struct(self, **kwargs):
-        """Removes the display of the projection and focuses only on the structure
+        """Removes the display of the projection and focuses only on the
+        structure
         """
         if self.mesh_projected in self.view.items:
             self.view.removeItem(self.mesh_projected)
@@ -187,7 +198,6 @@ class MeshVisualizer(PyQtVisualizer):
         # remove all items
         while len(self.view.items) != 0:
             self.view.removeItem(self.view.items[0])
-        # struct = trimesh.load(self.structure_file)
 
         # create meshes
         self.meshdata = gl.MeshData(vertexes=self.struct.vertices, faces=self.struct.faces,
@@ -206,6 +216,12 @@ class MeshVisualizer(PyQtVisualizer):
         self.set_camera(
             azi=None, center=self.get_structs_center(), ele=90, fov=1)
 
+    def set_axes(self, visible=False):
+        if visible:
+            self.view.addItem(self.axes)
+        elif self.axes in self.view.items:
+            self.view.removeItem(self.axes)
+
     def get_blurred_image(self, sigma=4, desired_background=None):
         """Applies a Gaussian blur to the image to make it correspond to the actual measurements more"""
 
@@ -218,8 +234,8 @@ class MeshVisualizer(PyQtVisualizer):
                 img[img > new1] = new1
                 img /= new1
             elif desired_background < background:
-                new0 = (background - desired_background) / \
-                    (1 - desired_background)
+                new0 = (background - desired_background)
+                (1 - desired_background)
                 img[img < new0] = new0
                 img -= new0
                 img /= 1 - new0
@@ -228,7 +244,9 @@ class MeshVisualizer(PyQtVisualizer):
 
 
 class NoProjectionVisualizer(PyQtVisualizer):
-    """Object for visualising only the structure. Useful when don't have the xmcd information and just want to see the structure magnetisation."""
+    """Object for visualising only the structure.
+    Useful when don't have the xmcd information and just want to see the
+    structure magnetisation."""
 
     def __init__(self, struct, struct_colors=None):
         super().__init__(background_color=1.0)
